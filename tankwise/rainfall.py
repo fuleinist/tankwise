@@ -53,13 +53,13 @@ class RainfallSeries:
     def month_totals(self) -> list[dict]:
         """Mean monthly rainfall in mm across the whole record."""
         sums = [0.0] * 12
-        counts = [0] * 12
+        years = set()
         for day, value in zip(self.dates, self.mm):
-            index = day.month - 1
-            sums[index] += value
-            counts[index] += 1
+            sums[day.month - 1] += value
+            years.add(day.year)
+        year_count = max(1, len(years))
         return [
-            {"month": m + 1, "mean_mm": round(sums[m] / counts[m], 1) if counts[m] else 0.0}
+            {"month": m + 1, "mean_mm": round(sums[m] / year_count, 1)}
             for m in range(12)
         ]
 

@@ -26,6 +26,18 @@ function setBusy(busy) {
   $("plan-btn").textContent = busy ? "Running…" : "Plan this tank";
 }
 
+function errorText(payload, fallback) {
+  const detail = payload && payload.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => `${(item.loc || []).join(".")}: ${item.msg || "invalid"}`)
+      .join("; ");
+  }
+  if (detail && typeof detail === "object") return JSON.stringify(detail);
+  return fallback;
+}
+
 function showError(message) {
   const box = $("error");
   box.textContent = message;
@@ -166,7 +178,7 @@ async function plan(offline = false) {
     });
     const payload = await response.json();
     if (!response.ok) {
-      throw new Error(payload.detail || "The plan failed.");
+      throw new Error(errorText(payload, "The plan failed."));
     }
     render(payload);
     $("placeholder").hidden = true;
@@ -381,5 +393,36 @@ $("tank").addEventListener("input", (event) => {
   $("tank-out").textContent = litres(Number(event.target.value));
 });
 
+/* ---------- shareable plan links ---------- */
+
+function applyQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const number = (key, fallback) => {
+    const value = params.get(key);
+    return value === null || value === "" || Number.isNaN(Number(value))
+      ? fallback
+      : Number(value);
+  };
+
+  const lat = number("lat", state.lat);
+  const lon = number("lon", state.lon);
+  const label = params.get("place") || "Pinned location";
+  setLocation(lat, lon, label);
+
+  if (params.has("roof")) $("roof").value = number("roof", 200);
+  if (params.has("occupants")) $("occupants").value = number("occupants", 4);
+  if (params.has("garden")) $("garden").value = number("garden", 100);
+  if (params.has("tank")) {
+    $("tank").value = number("tank", 5000);
+    $("tank-out").textContent = litres(number("tank", 5000));
+  }
+  if (params.has("target")) $("target").value = number("target", 0.9).toFixed(2);
+
+  if (params.get("autoplay") === "1") {
+    window.setTimeout(() => plan(params.get("offline") === "1"), 400);
+  }
+}
+
 initMap();
 $("tank-out").textContent = litres(Number($("tank").value));
+applyQuery();

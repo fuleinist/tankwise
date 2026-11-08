@@ -133,3 +133,5 @@ def test_monthly_series_shape():
     assert len(rows) == 12
     assert {"month", "rainfall_mm", "demand_kl", "harvested_kl", "level_pct_avg"} <= set(rows[0])
     assert all(0 <= row["level_pct_avg"] <= 100 for row in rows)
+    assert sum(row["rainfall_mm"] for row in rows) > 0
+    assert sum(row["inflow_kl"] for row in rows) > 0

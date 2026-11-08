@@ -21,14 +21,23 @@ class SimulationResult:
     spill_l: list[float]
     level_l: list[float]
     capacity_l: float
+    rain_mm: list[float] = field(default_factory=list)
     metrics: dict = field(default_factory=dict)
 
     def monthly_series(self, months: int = 36) -> list[dict]:
         """Aggregate the tail of the record into calendar months."""
         buckets: dict[str, dict] = {}
         order: list[str] = []
-        for day, level, spill, met, demand in zip(
-            self.dates, self.level_l, self.spill_l, self.met_l, self.demand_l
+        rain_source = self.rain_mm or [0.0] * len(self.dates)
+        for index, (day, level, spill, met, demand, rain) in enumerate(
+            zip(
+                self.dates,
+                self.level_l,
+                self.spill_l,
+                self.met_l,
+                self.demand_l,
+                rain_source,
+            )
         ):
             key = f"{day.year:04d}-{day.month:02d}"
             bucket = buckets.get(key)
@@ -45,7 +54,8 @@ class SimulationResult:
                 }
                 buckets[key] = bucket
                 order.append(key)
-            bucket["inflow_kl"] += 0.0
+            bucket["rainfall_mm"] += rain
+            bucket["inflow_kl"] += self.inflow_l[index] / 1000.0
             bucket["demand_kl"] += demand / 1000.0
             bucket["harvested_kl"] += met / 1000.0
             bucket["spill_kl"] += spill / 1000.0
@@ -58,7 +68,7 @@ class SimulationResult:
         for row in rows:
             days = row["days"] or 1
             row["level_pct_avg"] = round(row["level_pct_sum"] / days, 1)
-            for key in ("inflow_kl", "demand_kl", "harvested_kl", "spill_kl"):
+            for key in ("rainfall_mm", "inflow_kl", "demand_kl", "harvested_kl", "spill_kl"):
                 row[key] = round(row[key], 2)
             row["days"] = days
             del row["level_pct_sum"]
@@ -131,6 +141,7 @@ def simulate(
         spill_l=spills,
         level_l=levels,
         capacity_l=capacity_l,
+        rain_mm=list(rainfall.mm),
         metrics=metrics,
     )
 

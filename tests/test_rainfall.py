@@ -36,6 +36,13 @@ def test_month_totals_have_twelve_entries():
     assert [row["month"] for row in months] == list(range(1, 13))
 
 
+def test_month_totals_sum_to_annual_mean():
+    series = demo_series(days=365 * 3 + 1)
+    months = series.month_totals()
+    total = sum(row["mean_mm"] for row in months)
+    assert total == pytest.approx(series.mean_annual_mm(), rel=0.02)
+
+
 def test_load_csv_reads_fixture(tmp_path):
     path = tmp_path / "rain.csv"
     path.write_text(
