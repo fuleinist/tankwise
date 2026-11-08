@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tankwise"
+version = "0.1.0"
+description = "Rainwater tank planner. Simulate 30 years of local rainfall, then size the tank that lasts the dry season."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "tankwise contributors" }]
+keywords = ["rainwater", "water", "tank", "climate", "open-data", "australia"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Hydrology",
+]
+
+dependencies = []
+
+[project.optional-dependencies]
+server = ["fastapi>=0.110", "uvicorn>=0.29"]
+dev = ["pytest>=8.0", "httpx>=0.27", "fastapi>=0.110"]
+
+[project.scripts]
+tankwise = "tankwise.cli:main"
+
+[tool.setuptools]
+packages = ["tankwise"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
